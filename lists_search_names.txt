@@ -1,0 +1,3 @@
+Año.2009;emergya+-from%3Aemergya+-type%3Acheckins+-from%3Ajuanje.ojeda+-from%3Agloob+opt%3Anoquote+date%3A2009
+Año.2010;emergya+-from%3Aemergya+-type%3Acheckins+-from%3Ajuanje.ojeda+-from%3Agloob+opt%3Anoquote+date%3A2010
+Año.2011;emergya+-from%3Aemergya+-type%3Acheckins+-from%3Ajuanje.ojeda+-from%3Agloob+opt%3Anoquote+date%3A2011

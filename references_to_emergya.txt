@@ -1,0 +1,3 @@
+Emergya 2009;emergya+-from:emergya+-type:checkins+-from:juanje%2Eojeda+-from:gloob+opt:noquote+date:2009
+Emergya 2010;emergya+-from:emergya+-type:checkins+-from:juanje%2Eojeda+-from:gloob+opt:noquote+date:2010
+Emergya 2011;emergya+-from:emergya+-type:checkins+-from:juanje%2Eojeda+-from:gloob+opt:noquote+date:2011

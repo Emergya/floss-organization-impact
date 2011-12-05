@@ -1,0 +1,205 @@
+diff --git a/lib/github.rb b/lib/github.rb
+new file mode 100644
+index 0000000..e33a3c7
+--- /dev/null
++++ b/lib/github.rb
+@@ -0,0 +1,86 @@
++require 'open-uri'
++require 'json'
++load File.dirname(__FILE__) + '/utils.rb'
++
++module Github
++  BASE_URL = "http://github.com/api/v2/json"
++
++  include Utils
++
++  class User < Base
++    attr_accessor :name, :fullname, :emails, :commits, :owned_repos
++
++    def email
++      @emails.first if @emails
++    end
++
++    def own_repo?(repo)
++      if @owned_repos
++        @owned_repos.include? repo
++      else
++        false
++      end
++    end
++  end
++
++  class Repo < Base
++    attr_accessor :name, :owner, :commiters, :commits
++
++    def commits?
++      @commits.length
++    end
++  end
++
++  class Commit < Base
++    attr_accessor :id, :author, :repo, :date, :description
++  end
++
++  class Organization < Base
++    attr_accessor :name, :members, :repos
++
++    def member? user
++      if @members
++        @members.include? user
++      else
++        false
++      end
++    end
++  end
++
++  def self.commits_from user, repository
++    url = BASE_URL + "/commits/list/#{user}/#{repository}/master"
++    begin
++      opened_url = open url
++    rescue
++      []
++    else
++      JSON.parse(opened_url.read)["commits"].collect do |commit|
++        Commit.new(:id => commit["id"],
++                   :author => user,
++                   :repo => repository,
++                   :date => commit["committed_date"],
++                   :description => commit["message"]
++                  )
++      end
++    end
++  end
++
++  def self.user_repositories user
++    url = BASE_URL + "/repos/show/#{user}"
++    begin
++      opened_url = open(url)
++    rescue
++      []
++    else
++      JSON.parse(opened_url.read)["repositories"].collect { |repo|
++        if repo["fork"] == false
++          Repo.new(:name => repo["name"],
++                   :owner => user,
++                   :commiters => [user],
++                   :commits => commits_from(user, repo["name"])
++                        )
++        end
++      }.compact
++    end
++  end
++end
+diff --git a/lib/launchpad.rb b/lib/launchpad.rb
+new file mode 100644
+index 0000000..4174baf
+--- /dev/null
++++ b/lib/launchpad.rb
+@@ -0,0 +1,84 @@
++require 'open-uri'
++require 'json'
++load File.dirname(__FILE__) + '/utils.rb'
++
++module Launchpad
++  BASE_URL = "https://api.launchpad.net/devel"
++
++  include Utils
++
++  class User < Base
++    attr_accessor :name, :fullname, :emails, :commits, :owned_repos
++
++    def email
++      @emails.first if @emails
++    end
++
++    def own_repo?(repo)
++      if @owned_repos
++        @owned_repos.include? repo
++      else
++        false
++      end
++    end
++  end
++
++  class Repo < Base
++    attr_accessor :name, :owner, :commiters, :commits
++
++    def commits?
++      @commits.length
++    end
++  end
++
++  class Commit < Base
++    attr_accessor :id, :author, :repo, :date, :description
++  end
++
++  class Organization < Base
++    attr_accessor :name, :members, :repos
++
++    def member? user
++      if @members
++        @members.include? user
++      else
++        false
++      end
++    end
++  end
++
++  def self.user_repositories user
++    url = BASE_URL + "/~#{user}?ws.op=getBranches"
++    begin
++      opened_url = open(url)
++    rescue
++      []
++    else
++      JSON.parse(opened_url.read)["entries"].collect { |repo|
++        if repo["branch_type"] == "Hosted"
++          Repo.new(:name => repo["unique_name"],
++                   :owner => user,
++                   :commiters => [user],
++                   :commits => repo["revision_count"]
++                  )
++        end
++      }.compact
++    end
++  end
++
++  def self.organization_members org
++    url = BASE_URL + "/~#{org}/members"
++    begin
++      opened_url = open(url)
++    rescue
++      []
++    else
++      JSON.parse(opened_url.read)["entries"].collect { |user|
++        User.new(:name => user["name"],
++                 :fullname => user["display_name"],
++                 :owned_repos => user_repositories(user["name"])
++                )
++      }.compact
++    end
++  end
++end
+diff --git a/lib/utils.rb b/lib/utils.rb
+new file mode 100644
+index 0000000..356a401
+--- /dev/null
++++ b/lib/utils.rb
+@@ -0,0 +1,17 @@
++module Utils
++
++  class Base
++
++    def initialize args
++      update args
++    end
++
++    def update args
++      args.each do |k,v|
++        instance_variable_set "@#{k}", v if respond_to? k
++      end
++    end
++
++  end
++
++end
